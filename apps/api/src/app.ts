@@ -58,9 +58,9 @@ export async function buildApp({ logger = false }: { logger?: boolean } = {}) {
   const webDist =
     process.env.WEB_DIST ?? path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../web/dist');
   if (fs.existsSync(path.join(webDist, 'index.html'))) {
-    await app.register(fastifyStatic, { root: webDist, wildcard: false });
+    await app.register(fastifyStatic, { root: webDist });
     app.setNotFoundHandler((req, reply) => {
-      if (req.method !== 'GET' || req.url.startsWith('/api/')) {
+      if (req.method !== 'GET' || req.url.startsWith('/api/') || req.url.startsWith('/assets/')) {
         return reply.status(404).send({ error: 'Not found' });
       }
       return reply.sendFile('index.html');

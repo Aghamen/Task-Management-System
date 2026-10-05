@@ -2,8 +2,8 @@
 
 A self-hosted, Trello-style board tool for a team of 5–20 people.
 
-Status: **draft, awaiting approval**. Items marked _(assumed)_ were not answered
-yet and use a sensible default — change any of them before development starts.
+Status: **Phase 1 built** (plus live updates and filters from later phases).
+Items marked _(assumed)_ use a sensible default and can still be changed.
 
 ---
 
@@ -13,11 +13,12 @@ yet and use a sensible default — change any of them before development starts.
 |---|---|
 | Team size | 5–20 users |
 | Accounts | Created only by the Super Admin, who hands out login details. No self sign-up. |
+| Login | Username **or** email + password. |
 | Password reset | Only the Super Admin can change/reset passwords. Users can change their own password while logged in _(assumed)_. |
-| Super Admin | Exactly one Super Admin account with a separate admin panel. |
+| Super Admin | Exactly one Super Admin account with a separate admin panel. It is management-only and does not work on boards. |
 | Board roles | Same as Trello: Admin, Member, Observer. |
 | Workspaces | None for now — a flat list of boards. |
-| Board creation | Only the Super Admin creates boards. |
+| Board creation | Only the Super Admin creates boards and picks the person who becomes the board's Admin. |
 | Board backgrounds | Same as Trello: preset colors, gradients, and uploaded images. |
 | Templates | None. |
 | Archiving | Like Trello: boards, lists and cards can be archived and restored; permanent delete is a separate action. |
@@ -28,6 +29,8 @@ yet and use a sensible default — change any of them before development starts.
 | Extra views | Board view only in phase 1; Calendar view later _(assumed)_. |
 | UI language | English _(assumed)_. |
 | Dark mode | Yes _(assumed)_. |
+| Hosting | Subdomain on a VPS: Docker Compose behind nginx or Caddy. |
+| Deadline | As soon as possible. |
 | Mobile | Responsive web that works in mobile browsers; no native app _(assumed)_. |
 
 ## 2. Roles and permissions
@@ -35,7 +38,8 @@ yet and use a sensible default — change any of them before development starts.
 ### Super Admin (global)
 - Separate panel at `/admin`.
 - Create, edit, deactivate and delete user accounts; set/reset any password.
-- Create boards; see and open **every** board, including ones they're not a member of.
+- Create boards and choose each board's Admin; see every board in the admin panel.
+- Cannot open boards to work on cards (management-only account).
 - Add or remove any user from any board and set their board role.
 - Restore or permanently delete archived boards.
 - System settings: app name/logo, max attachment size, allowed file types.
@@ -182,12 +186,10 @@ drag-and-drop only updates the moved item.
 - Dark mode, mobile layout polish
 - Calendar view (optional)
 
-## 8. Open questions
+## 8. Progress
 
-1. Should the Super Admin also work on boards like a normal user, or is that a
-   purely administrative account (and admins use a second, personal account)?
-2. Log in with **username** or **email**?
-3. When the Super Admin creates a board, who becomes the board's Admin: the
-   Super Admin, or a user they pick?
-4. Where will it be hosted (company server, VPS, cloud)? Is there a domain name?
-5. Any deadline?
+- [x] Phase 1: login, Super Admin panel, boards and access control, lists, cards, drag and drop,
+  labels, members, dates, description, checklists, comments, archive/restore, covers (colors)
+- [x] From later phases: real-time updates, board filters
+- [ ] Phase 2: attachments and image covers, custom fields, move/copy cards across boards, activity log
+- [ ] Phase 3: notifications, @mentions, watching, dark mode, calendar view
