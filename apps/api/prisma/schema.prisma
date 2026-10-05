@@ -1,0 +1,183 @@
+generator client {
+  provider = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum BoardRole {
+  ADMIN
+  MEMBER
+  OBSERVER
+}
+
+model User {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  email        String   @unique
+  fullName     String
+  avatarColor  String   @default("#0c66e4")
+  passwordHash String
+  isSuperAdmin Boolean  @default(false)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  sessions       Session[]
+  memberships    BoardMember[]
+  cardMembers    CardMember[]
+  comments       Comment[]
+  createdBoards  Board[]         @relation("BoardCreator")
+  createdCards   Card[]          @relation("CardCreator")
+  checklistItems ChecklistItem[]
+}
+
+model Session {
+  id        String   @id // sha256 of the token stored in the cookie
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Board {
+  id          String    @id @default(cuid())
+  title       String
+  background  String    @default("#0079bf")
+  archivedAt  DateTime?
+  createdById String?
+  createdBy   User?     @relation("BoardCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  members BoardMember[]
+  lists   List[]
+  cards   Card[]
+  labels  Label[]
+}
+
+model BoardMember {
+  boardId   String
+  userId    String
+  role      BoardRole @default(MEMBER)
+  starred   Boolean   @default(false)
+  createdAt DateTime  @default(now())
+  board     Board     @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([boardId, userId])
+  @@index([userId])
+}
+
+model List {
+  id         String    @id @default(cuid())
+  boardId    String
+  board      Board     @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  title      String
+  position   Float
+  archivedAt DateTime?
+  createdAt  DateTime  @default(now())
+  cards      Card[]
+
+  @@index([boardId])
+}
+
+model Card {
+  id          String    @id @default(cuid())
+  boardId     String
+  board       Board     @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  listId      String
+  list        List      @relation(fields: [listId], references: [id], onDelete: Cascade)
+  title       String
+  description String    @default("")
+  position    Float
+  startDate   DateTime?
+  dueDate     DateTime?
+  dueComplete Boolean   @default(false)
+  coverColor  String?
+  archivedAt  DateTime?
+  createdById String?
+  createdBy   User?     @relation("CardCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  labels     CardLabel[]
+  members    CardMember[]
+  checklists Checklist[]
+  comments   Comment[]
+
+  @@index([listId])
+  @@index([boardId])
+}
+
+model Label {
+  id      String      @id @default(cuid())
+  boardId String
+  board   Board       @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  name    String      @default("")
+  color   String
+  cards   CardLabel[]
+
+  @@index([boardId])
+}
+
+model CardLabel {
+  cardId  String
+  labelId String
+  card    Card   @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  label   Label  @relation(fields: [labelId], references: [id], onDelete: Cascade)
+
+  @@id([cardId, labelId])
+}
+
+model CardMember {
+  cardId String
+  userId String
+  card   Card   @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([cardId, userId])
+}
+
+model Checklist {
+  id       String          @id @default(cuid())
+  cardId   String
+  card     Card            @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  title    String
+  position Float
+  items    ChecklistItem[]
+
+  @@index([cardId])
+}
+
+model ChecklistItem {
+  id          String    @id @default(cuid())
+  checklistId String
+  checklist   Checklist @relation(fields: [checklistId], references: [id], onDelete: Cascade)
+  text        String
+  checked     Boolean   @default(false)
+  position    Float
+  assigneeId  String?
+  assignee    User?     @relation(fields: [assigneeId], references: [id], onDelete: SetNull)
+  dueDate     DateTime?
+
+  @@index([checklistId])
+}
+
+model Comment {
+  id        String    @id @default(cuid())
+  cardId    String
+  card      Card      @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  authorId  String?
+  author    User?     @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  body      String
+  createdAt DateTime  @default(now())
+  editedAt  DateTime?
+
+  @@index([cardId])
+}
