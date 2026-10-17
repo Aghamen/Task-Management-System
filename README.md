@@ -13,6 +13,45 @@ See [docs/PLAN.md](docs/PLAN.md) for the full plan and the upcoming phases.
 
 ---
 
+## Run it on your computer
+
+### Option 1: one command with Docker (easiest)
+
+Install [Docker Desktop](https://www.docker.com/products/docker-desktop/) (Windows / macOS) or Docker Engine (Linux), then:
+
+```bash
+git clone https://github.com/aghamen/task-management-system.git taskboard
+cd taskboard
+docker compose -f docker-compose.local.yml up --build
+```
+
+Wait for `Created super admin account "admin"` (the first build takes a few minutes), then open
+**http://localhost:3000** and log in with **`admin` / `admin12345`**.
+
+- Stop: `Ctrl+C` (or `docker compose -f docker-compose.local.yml down`)
+- Start again later: same `up` command. Your boards and users are kept.
+- Wipe all data: `docker compose -f docker-compose.local.yml down -v`
+
+Teammates on the same network can use it too: open `http://<your-computer's-IP>:3000`.
+
+### Option 2: developer mode (live reload while editing the code)
+
+Requires **Node.js 22+**, plus Docker for the database (or your own PostgreSQL 16).
+
+```bash
+npm install
+npm run db       # starts PostgreSQL in Docker on localhost:5433 (skip if you use your own Postgres)
+npm run setup    # creates apps/api/.env and sets up the database tables
+npm run dev      # starts the API and the web app
+```
+
+Open **http://localhost:5173** and log in with **`admin` / `admin12345`**. Code changes reload automatically.
+
+Using your own PostgreSQL instead of `npm run db`? Create an empty database, set `DATABASE_URL`
+in `apps/api/.env`, then run `npm run setup`.
+
+---
+
 ## Deploying on a VPS (subdomain, e.g. `tasks.example.com`)
 
 You need a Linux VPS with **Docker** and the **Docker Compose plugin**, and a DNS `A` record pointing your subdomain at the VPS IP.
@@ -124,19 +163,13 @@ Add the backup line to a daily cron job, for example `0 3 * * * cd /path/to/task
 
 ## Development
 
-Requirements: Node.js 22+ and PostgreSQL 16.
-
-```bash
-npm install
-cp apps/api/.env.example apps/api/.env       # point DATABASE_URL at your local Postgres
-cd apps/api && npx prisma migrate dev && cd ../..
-npm run dev            # API on :3000, web app on http://localhost:5173
-```
-
 | Command | What it does |
 |---|---|
-| `npm run dev` | API (auto-reload) + Vite dev server |
-| `npm run build` | Build API and web app |
+| `npm run local` | Whole app in Docker on http://localhost:3000 (same as Option 1) |
+| `npm run db` | Start only the local PostgreSQL (Docker, port 5433) |
+| `npm run setup` | Create `apps/api/.env` if missing and apply database migrations |
+| `npm run dev` | API (auto-reload) + web app on http://localhost:5173 |
+| `npm run build` / `npm start` | Production build, then serve everything on http://localhost:3000 |
 | `npm run typecheck` | TypeScript checks for both apps |
 | `npm test` | API integration tests (needs a `taskboard_test` database, or set `TEST_DATABASE_URL`) |
 
@@ -148,4 +181,5 @@ apps/api     Fastify + Prisma (PostgreSQL) + Socket.IO, serves the built web app
   src/routes auth, admin, boards, lists, cards, checklists
 apps/web     React + Vite + Tailwind + dnd-kit + TanStack Query
   src/pages  Login, Boards, Board, CardModal, Profile, admin/*
+scripts/     setup.mjs (local setup helper)
 ```

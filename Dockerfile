@@ -1,6 +1,8 @@
+# The full (non-slim) Node image already includes OpenSSL, which Prisma needs,
+# so the build doesn't depend on apt mirrors being reachable.
+
 # ---- Build ----
-FROM node:22-bookworm-slim AS build
-RUN apt-get update && apt-get install -y --no-install-recommends openssl && rm -rf /var/lib/apt/lists/*
+FROM node:22-bookworm AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
 COPY apps/api/package.json apps/api/
@@ -10,8 +12,7 @@ COPY . .
 RUN npm run build && npm prune --omit=dev && cd apps/api && npx prisma generate
 
 # ---- Run ----
-FROM node:22-bookworm-slim
-RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
+FROM node:22-bookworm
 ENV NODE_ENV=production
 WORKDIR /app
 COPY --from=build /app/package.json ./

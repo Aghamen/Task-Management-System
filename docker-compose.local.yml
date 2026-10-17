@@ -1,0 +1,47 @@
+# Run TaskBoard on your own computer — no configuration needed:
+#
+#   docker compose -f docker-compose.local.yml up --build
+#
+# Then open http://localhost:3000 and log in as  admin / admin12345
+# Stop with Ctrl+C. Your data is kept in the "db-data" volume between runs.
+# (To wipe everything:  docker compose -f docker-compose.local.yml down -v)
+
+name: taskboard-local
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: taskboard
+      POSTGRES_PASSWORD: taskboard
+      POSTGRES_DB: taskboard
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    # Also exposed on localhost:5433 so `npm run dev` can use it.
+    ports:
+      - '127.0.0.1:5433:5432'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U taskboard']
+      interval: 3s
+      timeout: 5s
+      retries: 20
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://taskboard:taskboard@db:5432/taskboard
+      SUPERADMIN_USERNAME: admin
+      SUPERADMIN_EMAIL: admin@localhost.local
+      SUPERADMIN_PASSWORD: admin12345
+      COOKIE_SECURE: 'false'
+      PORT: 3000
+    ports:
+      - '3000:3000'
+
+volumes:
+  db-data:
